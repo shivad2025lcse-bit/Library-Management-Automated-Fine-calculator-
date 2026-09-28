@@ -1,0 +1,459 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Librarian Sign In | College Library</title>
+    <style>
+        :root { --ink: #182229; --muted: #6d7b7d; --teal: #0d6b68; --teal-dark: #084b4b; --coral: #e47b5d; --paper: #fffdf8; }
+        * { box-sizing: border-box; }
+        body { font-family: Georgia, 'Times New Roman', serif; color: var(--ink); background: #eef4ef; margin: 0; min-height: 100vh; }
+        .login-shell { min-height: 100vh; display: grid; grid-template-columns: minmax(280px, 0.9fr) minmax(360px, 1.1fr); background: var(--paper); }
+        .login-intro { display: flex; flex-direction: column; justify-content: space-between; padding: clamp(32px, 7vw, 92px); color: #f5f2e8; background: var(--teal-dark); }
+        .eyebrow { margin: 0 0 28px; color: #a9d9c9; font: 700 12px/1.2 Arial, sans-serif; letter-spacing: .15em; text-transform: uppercase; }
+        .login-intro h1 { max-width: 520px; margin: 0; font-size: clamp(42px, 5vw, 76px); line-height: .98; font-weight: 500; letter-spacing: -1px; }
+        .login-intro p { max-width: 390px; margin: 28px 0 0; color: #c8ddd3; font: 16px/1.65 Arial, sans-serif; }
+        .library-mark { width: 68px; height: 68px; display: grid; place-items: center; border: 1px solid rgba(223,241,232,.45); border-radius: 50%; color: #dff1e8; font-size: 28px; }
+        .login-note { margin: 0; color: #a9c2b8; font: 12px/1.5 Arial, sans-serif; }
+        .login-panel { display: flex; align-items: center; justify-content: center; padding: 32px; background: #fffdf8; }
+        .login-card { width: min(100%, 430px); }
+        .login-card h2 { margin: 0 0 10px; color: var(--ink); text-align: left; font-size: 34px; font-weight: 500; }
+        .login-card .subhead { margin: 0 0 34px; color: var(--muted); font: 15px/1.5 Arial, sans-serif; }
+        .login-form label { display: block; margin: 18px 0 8px; color: #425354; font: 700 12px/1.2 Arial, sans-serif; letter-spacing: .08em; text-transform: uppercase; }
+        .login-form input { width: 100%; padding: 15px 16px; border: 1px solid #cbd8d1; border-radius: 3px; color: var(--ink); background: #fff; font: 16px Arial, sans-serif; outline: none; }
+        .login-form input:focus { border-color: var(--teal); box-shadow: 0 0 0 3px rgba(13,107,104,.12); }
+        .login-submit { width: 100%; margin-top: 28px; padding: 15px 18px; border: 0; border-radius: 3px; color: white; background: var(--coral); cursor: pointer; font: 700 14px Arial, sans-serif; letter-spacing: .04em; }
+        .login-submit:hover { background: #cb654b; }
+        .login-error { min-height: 20px; margin: 12px 0 0; color: #b34e3b; font: 13px/1.4 Arial, sans-serif; }
+        .login-meta { display: flex; justify-content: space-between; gap: 12px; margin-top: 22px; color: var(--muted); font: 12px Arial, sans-serif; }
+        .login-meta span:last-child { color: var(--teal); font-weight: 700; }
+        body.app-ready { padding: 20px; }
+        body.app-ready .login-shell { display: none; }
+        body:not(.app-ready) .app-container { display: none; }
+        .container { max-width: 1200px; margin: auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
+        h1, h2 { color: #333; text-align: center; }
+        .dashboard { display: flex; gap: 15px; flex-wrap: wrap; justify-content: center; margin-bottom: 20px; }
+        .card { background: #007bff; color: white; padding: 20px; border-radius: 8px; text-align: center; width: 150px; font-weight: bold; }
+        .reminders { margin-top: 25px; }
+        .reminders h3 { margin: 20px 0 8px; color: #333; }
+        .reminder-table { margin-top: 0; }
+        .reminder-table .due-today { color: #9a5b00; font-weight: bold; }
+        .reminder-table .overdue { color: #b42318; font-weight: bold; }
+        .call-btn { display: inline-block; padding: 7px 10px; color: white; background: #0d6b68; border-radius: 4px; text-decoration: none; }
+        .call-btn:hover { background: #084b4b; }
+        .empty-reminders { padding: 12px; color: #6d7b7d; background: #f8f9fa; }
+        nav { display: flex; gap: 10px; justify-content: center; margin-bottom: 20px; }
+        button { padding: 10px 15px; background: #28a745; color: white; border: none; border-radius: 4px; cursor: pointer; }
+        button:hover { background: #218838; }
+        table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+        th, td { border: 1px solid #ddd; padding: 10px; text-align: left; }
+        th { background-color: #f8f9fa; }
+        .hidden { display: none; }
+        input, select { padding: 8px; margin: 5px 0; width: 100%; box-sizing: border-box; }
+        .form-group { margin-bottom: 15px; }
+        .action-btn { background: #17a2b8; padding: 5px 10px; margin-right: 5px; }
+        .danger-btn { background: #dc3545; }
+    </style>
+</head>
+<body>
+
+<main class="login-shell" id="login-shell">
+    <section class="login-intro" aria-label="Library welcome">
+        <div>
+            <div class="library-mark" aria-hidden="true">✦</div>
+            <p class="eyebrow">College Library / Staff Portal</p>
+            <h1>Quiet spaces.<br>Thoughtful work.</h1>
+            <p>Everything you need to keep the shelves moving and the campus reading.</p>
+        </div>
+        <p class="login-note">Authorized librarians only · Campus operations</p>
+    </section>
+    <section class="login-panel">
+        <div class="login-card">
+            <p class="eyebrow" style="color: var(--teal); margin-bottom: 18px;">Welcome back</p>
+            <h2>Sign in to the library desk</h2>
+            <p class="subhead">Use your librarian credentials to continue to the collection workspace.</p>
+            <form class="login-form" id="login-form">
+                <label for="librarian-id">Librarian ID</label>
+                <input id="librarian-id" name="librarian-id" type="text" autocomplete="username" placeholder="e.g. librarian" required>
+                <label for="librarian-password">Password</label>
+                <input id="librarian-password" name="password" type="password" autocomplete="current-password" placeholder="Enter your password" required>
+                <p class="login-error" id="login-error" role="alert"></p>
+                <button class="login-submit" type="submit">Enter the workspace</button>
+            </form>
+            <div class="login-meta"><span>Need access?</span><span>Contact the library administrator</span></div>
+        </div>
+    </section>
+</main>
+
+<div class="container app-container" id="app-container">
+    <h1>College Library Management</h1>
+    <button onclick="logout()" style="float: right; background: #e47b5d;">Sign out</button>
+    
+    <nav>
+        <button onclick="showSection('dashboard-sec'); loadDashboard()">Dashboard</button>
+        <button onclick="showSection('books-sec'); loadBooks()">Books</button>
+        <button onclick="showSection('students-sec'); loadStudents()">Students</button>
+        <button onclick="showSection('issue-sec'); loadIssueData()">Issue/Return Book</button>
+    </nav>
+
+    <!-- Dashboard -->
+    <div id="dashboard-sec">
+        <h2>Dashboard</h2>
+        <div class="dashboard" id="dash-cards">
+            <!-- Loaded via JS -->
+        </div>
+        <section class="reminders" aria-labelledby="reminders-title">
+            <h2 id="reminders-title">Return Reminders</h2>
+            <div id="return-reminders"></div>
+        </section>
+    </div>
+
+    <!-- Books -->
+    <div id="books-sec" class="hidden">
+        <h2>Books Management</h2>
+        <button onclick="document.getElementById('book-form').classList.toggle('hidden')">Add New Book</button>
+        <input type="text" id="search-book" placeholder="Search by Title, Author, Category..." onkeyup="searchBooks()">
+        
+        <div id="book-form" class="hidden" style="margin-top: 15px; background: #f9f9f9; padding: 15px; border-radius: 8px;">
+            <input type="text" id="b-title" placeholder="Title">
+            <input type="text" id="b-author" placeholder="Author">
+            <input type="text" id="b-isbn" placeholder="ISBN">
+            <input type="text" id="b-cat" placeholder="Category">
+            <input type="number" id="b-copies" placeholder="Total Copies">
+            <button onclick="saveBook()">Save</button>
+        </div>
+
+        <table>
+            <thead><tr><th>ID</th><th>Title</th><th>Author</th><th>ISBN</th><th>Category</th><th>Copies</th><th>Available</th></tr></thead>
+            <tbody id="books-table"></tbody>
+        </table>
+    </div>
+
+    <!-- Students -->
+    <div id="students-sec" class="hidden">
+        <h2>Students Management</h2>
+        <button onclick="document.getElementById('student-form').classList.toggle('hidden')">Add New Student</button>
+        <input type="search" id="student-search" aria-label="Search students by student ID or name" placeholder="Search by student ID or name" oninput="filterStudents()" style="margin: 15px 0; min-width: 280px; padding: 10px;">
+        
+        <div id="student-form" class="hidden" style="margin-top: 15px; background: #f9f9f9; padding: 15px; border-radius: 8px;">
+            <input type="text" id="s-id" placeholder="Student ID (e.g. CSE001)">
+            <input type="text" id="s-name" placeholder="Name">
+            <input type="text" id="s-dept" placeholder="Department">
+            <input type="number" id="s-year" placeholder="Year">
+            <input type="email" id="s-email" placeholder="Email">
+            <input type="text" id="s-phone" placeholder="Phone">
+            <button onclick="saveStudent()">Save</button>
+        </div>
+
+        <table>
+            <thead><tr><th>ID</th><th>Student ID</th><th>Name</th><th>Dept</th><th>Year</th><th>Email</th><th>Phone</th><th>Action</th></tr></thead>
+            <tbody id="students-table"></tbody>
+        </table>
+    </div>
+
+    <!-- Issue & Return -->
+    <div id="issue-sec" class="hidden">
+        <h2>Issue Book</h2>
+        <div style="background: #f9f9f9; padding: 15px; border-radius: 8px;">
+            <select id="issue-student"><option value="">Select Student</option></select>
+            <select id="issue-book"><option value="">Select Book</option></select>
+            <input type="date" id="issue-date" title="Leave blank for today's date">
+            <button onclick="issueBook()">Issue</button>
+        </div>
+
+        <h2>Currently Issued Books</h2>
+        <input type="search" id="issue-search" aria-label="Search issued books by date, student, or book" placeholder="Search by date, student, or book" oninput="filterIssues()" style="margin: 0 0 15px; min-width: 300px; padding: 10px;">
+        <table>
+            <thead><tr><th>ID</th><th>Student</th><th>Book</th><th>Issue Date</th><th>Days Issued</th><th>Due Date</th><th>Fine</th><th>Action</th></tr></thead>
+            <tbody id="issued-table"></tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+    const API = 'http://localhost:8081/api';
+    let editStudentId = null;
+    let allStudents = [];
+    let allIssuedBooks = [];
+
+    function showWorkspace() {
+        document.body.classList.add('app-ready');
+        loadDashboard();
+    }
+
+    function logout() {
+        sessionStorage.removeItem('librarianAuthenticated');
+        document.body.classList.remove('app-ready');
+        document.getElementById('login-form').reset();
+        document.getElementById('login-error').textContent = '';
+    }
+
+    document.getElementById('login-form').addEventListener('submit', function(event) {
+        event.preventDefault();
+        const librarianId = document.getElementById('librarian-id').value.trim();
+        const password = document.getElementById('librarian-password').value;
+        const error = document.getElementById('login-error');
+
+        if (!librarianId || !password) {
+            error.textContent = 'Enter your librarian ID and password to continue.';
+            return;
+        }
+
+        sessionStorage.setItem('librarianAuthenticated', 'true');
+        error.textContent = '';
+        showWorkspace();
+    });
+
+    function showSection(id) {
+        ['dashboard-sec', 'books-sec', 'students-sec', 'issue-sec'].forEach(sec => {
+            document.getElementById(sec).classList.add('hidden');
+        });
+        document.getElementById(id).classList.remove('hidden');
+    }
+
+    async function loadDashboard() {
+        const res = await fetch(`${API}/dashboard`);
+        const data = await res.json();
+        document.getElementById('dash-cards').innerHTML = `
+            <div class="card">Total Books<br>${data.totalBookRecords}</div>
+            <div class="card">Total Copies<br>${data.totalBookCopies}</div>
+            <div class="card">Available<br>${data.availableCopies}</div>
+            <div class="card">Issued<br>${data.issuedCopies}</div>
+            <div class="card">Students<br>${data.totalStudents}</div>
+            <div class="card">Overdue<br>${data.overdueBooks}</div>
+        `;
+        loadReturnReminders();
+    }
+
+    async function loadReturnReminders() {
+        const res = await fetch(`${API}/issues/issued`);
+        const issues = await res.json();
+        const today = new Date();
+        const todayText = [today.getFullYear(), String(today.getMonth() + 1).padStart(2, '0'), String(today.getDate()).padStart(2, '0')].join('-');
+        const dueToday = issues.filter(issue => issue.dueDate === todayText);
+        const overdue = issues.filter(issue => issue.dueDate < todayText);
+        const reminderContainer = document.getElementById('return-reminders');
+
+        reminderContainer.innerHTML = `
+            <h3>Due today: ${dueToday.length}</h3>
+            ${renderReminderTable(dueToday, 'due-today', 'Call these students before the day ends.')}
+            <h3>Overdue and not returned: ${overdue.length}</h3>
+            ${renderReminderTable(overdue, 'overdue', 'These books are past their due date and still issued.')}
+        `;
+    }
+
+    function renderReminderTable(issues, statusClass, emptyMessage) {
+        if (!issues.length) return `<div class="empty-reminders">${emptyMessage} None right now.</div>`;
+        return `<table class="reminder-table">
+            <thead><tr><th>Student</th><th>Phone</th><th>Book</th><th>Due date</th><th>Action</th></tr></thead>
+            <tbody>${issues.map(issue => `
+                <tr>
+                    <td>${issue.student.name} (${issue.student.studentId})</td>
+                    <td>${issue.student.phone}</td>
+                    <td>${issue.book.title}</td>
+                    <td class="${statusClass}">${issue.dueDate}</td>
+                    <td><a class="call-btn" href="tel:${encodeURIComponent(issue.student.phone)}">Call student</a></td>
+                </tr>
+            `).join('')}</tbody>
+        </table>`;
+    }
+
+    async function loadBooks() {
+        const res = await fetch(`${API}/books`);
+        const books = await res.json();
+        renderBooks(books);
+    }
+
+    function renderBooks(books) {
+        const tbody = document.getElementById('books-table');
+        tbody.innerHTML = books.map(b => `
+            <tr>
+                <td>${b.id}</td><td>${b.title}</td><td>${b.author}</td>
+                <td>${b.isbn}</td><td>${b.category}</td><td>${b.totalCopies}</td>
+                <td>${b.availableCopies}</td>
+            </tr>
+        `).join('');
+    }
+
+    async function searchBooks() {
+        const q = document.getElementById('search-book').value;
+        const res = await fetch(`${API}/books/search?keyword=${q}`);
+        renderBooks(await res.json());
+    }
+
+    async function saveBook() {
+        const book = {
+            title: document.getElementById('b-title').value,
+            author: document.getElementById('b-author').value,
+            isbn: document.getElementById('b-isbn').value,
+            category: document.getElementById('b-cat').value,
+            totalCopies: document.getElementById('b-copies').value
+        };
+        await fetch(`${API}/books`, {
+            method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(book)
+        });
+        alert('Book added!');
+        loadBooks();
+    }
+
+    async function loadStudents() {
+        const res = await fetch(`${API}/students`);
+        allStudents = await res.json();
+        renderStudents(allStudents);
+    }
+
+    function filterStudents() {
+        const searchTerm = document.getElementById('student-search').value.trim().toLowerCase();
+        const filteredStudents = allStudents.filter(student =>
+            String(student.studentId).toLowerCase().includes(searchTerm) ||
+            String(student.name).toLowerCase().includes(searchTerm)
+        );
+        renderStudents(filteredStudents);
+    }
+
+    function renderStudents(students) {
+        const tbody = document.getElementById('students-table');
+        tbody.innerHTML = students.map(s => `
+            <tr>
+                <td>${s.id}</td><td>${s.studentId}</td><td>${s.name}</td>
+                <td>${s.department}</td><td>${s.year}</td><td>${s.email}</td><td>${s.phone}</td>
+                <td>
+                    <button class="action-btn" onclick='editStudent(${JSON.stringify(s)})' style="background: #007bff; color: white;">Edit</button>
+                    <button class="action-btn danger-btn" onclick="deleteStudent(${s.id})">Delete</button>
+                </td>
+            </tr>
+        `).join('');
+    }
+
+    async function saveStudent() {
+        const student = {
+            studentId: document.getElementById('s-id').value,
+            name: document.getElementById('s-name').value,
+            department: document.getElementById('s-dept').value,
+            year: document.getElementById('s-year').value,
+            email: document.getElementById('s-email').value,
+            phone: document.getElementById('s-phone').value
+        };
+        
+        const url = editStudentId ? `${API}/students/${editStudentId}` : `${API}/students`;
+        const method = editStudentId ? 'PUT' : 'POST';
+
+        await fetch(url, {
+            method: method, headers: {'Content-Type': 'application/json'}, body: JSON.stringify(student)
+        });
+        alert(editStudentId ? 'Student updated!' : 'Student added!');
+        
+        editStudentId = null;
+        document.getElementById('student-form').classList.add('hidden');
+        loadStudents();
+    }
+
+    function editStudent(s) {
+        editStudentId = s.id;
+        document.getElementById('s-id').value = s.studentId;
+        document.getElementById('s-name').value = s.name;
+        document.getElementById('s-dept').value = s.department;
+        document.getElementById('s-year').value = s.year;
+        document.getElementById('s-email').value = s.email;
+        document.getElementById('s-phone').value = s.phone;
+        document.getElementById('student-form').classList.remove('hidden');
+        window.scrollTo(0, 0);
+    }
+
+    async function deleteStudent(id) {
+        if(!confirm('Are you sure you want to delete this student?')) return;
+        await fetch(`${API}/students/${id}`, { method: 'DELETE' });
+        alert('Student deleted!');
+        loadStudents();
+    }
+
+    async function loadIssueData() {
+        // Load dropdowns
+        const sRes = await fetch(`${API}/students`);
+        const sData = await sRes.json();
+        document.getElementById('issue-student').innerHTML = `<option value="">Select Student</option>` + 
+            sData.map(s => `<option value="${s.id}">${s.name} (${s.studentId})</option>`).join('');
+
+        const bRes = await fetch(`${API}/books`);
+        const bData = await bRes.json();
+        document.getElementById('issue-book').innerHTML = `<option value="">Select Book</option>` + 
+            bData.map(b => `<option value="${b.id}">${b.title} (Avail: ${b.availableCopies})</option>`).join('');
+
+        // Load currently issued
+        const iRes = await fetch(`${API}/issues/issued`);
+        allIssuedBooks = await iRes.json();
+        renderIssues(allIssuedBooks);
+    }
+
+    function filterIssues() {
+        const searchTerm = document.getElementById('issue-search').value.trim().toLowerCase();
+        const filteredIssues = allIssuedBooks.filter(issue => {
+            const searchableText = [
+                issue.issueDate,
+                issue.dueDate,
+                issue.student?.name,
+                issue.student?.studentId,
+                issue.book?.title
+            ].join(' ').toLowerCase();
+            return searchableText.includes(searchTerm);
+        });
+        renderIssues(filteredIssues);
+    }
+
+    function getDaysSinceIssue(issueDate) {
+        const [year, month, day] = issueDate.split('-').map(Number);
+        const issueDay = Date.UTC(year, month - 1, day);
+        const today = new Date();
+        const todayDay = Date.UTC(today.getFullYear(), today.getMonth(), today.getDate());
+        return Math.max(0, Math.floor((todayDay - issueDay) / 86400000));
+    }
+
+    function renderIssues(issues) {
+        document.getElementById('issued-table').innerHTML = issues.map(i => `
+            <tr>
+                <td>${i.id}</td><td>${i.student.name}</td><td>${i.book.title}</td>
+                <td>${i.issueDate}</td><td>${getDaysSinceIssue(i.issueDate)}</td><td>${i.dueDate}</td><td>₹${i.fineAmount}</td>
+                <td><button class="action-btn danger-btn" onclick="returnBook(${i.id})">Return</button></td>
+            </tr>
+        `).join('');
+    }
+
+    async function issueBook() {
+        const sId = document.getElementById('issue-student').value;
+        const bId = document.getElementById('issue-book').value;
+        const iDate = document.getElementById('issue-date').value;
+        if(!sId || !bId) return alert('Select both');
+        
+        const payload = {studentId: sId, bookId: bId};
+        if(iDate) payload.issueDate = iDate;
+
+        const res = await fetch(`${API}/issues`, {
+            method: 'POST', headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify(payload)
+        });
+        if(res.ok) {
+            alert('Issued!');
+            loadIssueData();
+        } else {
+            const err = await res.json();
+            alert(err.error || 'Failed');
+        }
+    }
+
+    async function returnBook(id) {
+        const res = await fetch(`${API}/issues/${id}/return`, {method: 'PUT'});
+        if(res.ok) {
+            alert('Returned!');
+            loadIssueData();
+        } else {
+            const err = await res.json();
+            alert(err.error || 'Failed');
+        }
+    }
+
+    window.onload = function() {
+        if (sessionStorage.getItem('librarianAuthenticated') === 'true') showWorkspace();
+    };
+</script>
+</body>
+</html>
